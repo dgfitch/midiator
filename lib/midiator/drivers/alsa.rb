@@ -42,16 +42,26 @@ class MIDIator::Driver::ALSA < MIDIator::Driver # :nodoc:
     extern "int snd_rawmidi_open(void*, void*, char*, int)"
     extern "int snd_rawmidi_close(void*)"
     extern "int snd_rawmidi_write(void*, void*, int)"
+    extern "int snd_rawmidi_read(void*, void*, int)"
     extern "int snd_rawmidi_drain(void*)"
   end
 
   def open
     @output = DL::PtrData.new(nil)
     C.snd_rawmidi_open(nil, @output.ref, "virtual", 0)
+    @input = DL::PtrData.new(nil)
+    C.snd_rawmidi_open(nil, @input.ref, "virtual", 0)
   end
 
   def close
     C.snd_rawmidi_close(@output)
+  end
+
+  def listen
+    C.snd_rawmidi_drain(@input)
+    bytes = DL::PtrData.new(nil)
+    C.snd_rawmidi_read(@input, bytes.ref, 1)
+    bytes
   end
 
   def message(*args)
